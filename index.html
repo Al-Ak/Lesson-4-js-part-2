@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+      
+  <meta charset="utf-8" />
+      
+  <meta name="viewport" content="width=device-width" />
+      
+  <title>Список пользователей</title>
+      
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+
+  <style>
+    .modal_shell {
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      top: 0;
+      left: 0;
+      display: flex;
+    }
+
+    .modal_overlay {
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      position: absolute;
+      z-index: 2;
+    }
+
+    .modals {
+      width: 30vw;
+      height: 50vh;
+      border-radius: 20px;
+      background-color: #ccc;
+      padding: 30px;
+      position: relative;
+      top: 0;
+      left: 0;
+      z-index: 5;
+    }
+
+    .hide {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>Список пользователей</h2>
+    <form name="userForm" id="userForm">
+      <div class="form-group">
+         <label for="name">Имя:</label>
+        <input class="form-control" name="name" id="userName" />
+      </div>
+      <div class="form-group">
+          <label for="age">Возраст:</label>
+        <input class="form-control" name="age" id="userAge" />
+      </div>
+      <div class="panel-body">
+        <button type="submit" class="btn btn-sm btn-primary">
+          Сохранить
+        </button>
+        <a id="reset" class="btn btn-sm btn-primary">Сбросить</a>
+      </div>
+    </form>
+    <table class="table table-condensed table-striped table-bordered">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Имя</th>
+          <th>возраст</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="modal_shell hide" id="modal_shell">
+    <div class="modal_overlay " id="modal_overlay"></div>
+    <div class="modals">
+      <form id="change-form">
+        <input type="text" id="change-name" name="changeName" placeholder="Type your name" />
+        <hr />
+        <input type="text" id="change-age" name="changeAge" placeholder="Type your age" />
+        <hr />
+        <button>Press</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const createUserFormEl = document.getElementById('userForm')
+    const userAgeEl = document.getElementById('userAge')
+    const userNameEl = document.getElementById('userName')
+    const resetEl = document.getElementById('reset')
+    const userChangeFormEl = document.getElementById('change-form')
+    const changeUserNameEl = document.getElementById('change-name')
+    const changeUserAgeEl = document.getElementById('change-age')
+    const modalShellEl = document.getElementById('modal_shell')
+    const modalOverlayEl = document.getElementById('modal_overlay')
+
+    const tableBodyel = document.querySelector
+      ('tbody')
+
+
+    const apiUrl = "/api/users"
+
+    const getUsers = async () => {
+      const response = await fetch('/api/users')
+      const users = await response.json();
+
+      const renderUsers = users.reduce(
+        (result, el) => (result += row(el)),
+        ""
+      );
+
+      tableBodyel.innerHTML = renderUsers
+    };
+
+    const createUser = async (name, age) => {
+      const options = {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ name, age }),
+
+      };
+      await fetch(apiUrl, options)
+      await getUsers()
+    };
+    const reset = (form = createUserFormEl) => {
+      form.reset();
+
+    }
+    const onResetClick = () => {
+
+      reset(createUserFormEl)
+    };
+
+
+
+
+    const onCreateUserSubmit = (event) => {
+      event.preventDefault();
+      const userName = userNameEl.value;
+      const userAge = userAgeEl.value;
+
+      if (userName.trim().length == 0) {
+        userNameEl.style.borderBlockColor = 'red'
+
+        alert('Заполните поля!')
+        if (userAge.trim().length == 0) {
+          userAgeEl.style.borderBlockColor = 'red'
+
+
+          alert('Заполните поля!')
+        } else {
+          userAgeEl.style.borderBlockColor = 'white'
+        }
+
+      } else if (userAge.trim().length == 0) {
+        userAgeEl.style.borderBlockColor = 'red'
+        alert('Заполните поля!')
+        userNameEl.style.borderBlockColor = 'white'
+      } else {
+
+        createUser(userName, userAge).then(reset)
+        userNameEl.style.borderBlockColor = 'white'
+        userAgeEl.style.borderBlockColor = 'white'
+
+      }
+
+
+    }
+    getUsers();
+    const deleteA = (id) => {
+      const del = document.getElementById(`del-${id}`).parentElement.parentElement.remove()
+      console.log(id);
+      fetch(`api/users/${id}`, { method: "DELETE" })
+    }
+
+    resetEl.addEventListener('click', onResetClick)
+    createUserFormEl.addEventListener('submit',
+      onCreateUserSubmit)
+
+
+    function row(user) {
+      const renderUser = `
+          <tr>
+            <td>${user.id}</td>
+            <td>${user.name}</td>
+            <td>${user.age}</td>
+            <td id="${user.id}">
+              <a data-action="edit" href="javascript:void(0)">Изменить</a>
+              <a id ="del-${user.id}" name='e' onClick='deleteA(${user.id})' href="javascript:void(0)">Удалить</a>
+              </td>
+          </tr>
+        `
+      return renderUser;
+    }
+
+  </script>
+</body>
+
+</html>
